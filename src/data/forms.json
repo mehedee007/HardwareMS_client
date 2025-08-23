@@ -1,0 +1,151 @@
+{
+  "forms": [
+    {
+      "id": "1",
+      "title": "Customer Feedback Survey",
+      "description": "Help us improve our services by sharing your feedback",
+      "status": "published",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-20T14:45:00Z",
+      "user_id": "user1",
+      "settings": {
+        "allow_multiple_responses": false,
+        "collect_email": true,
+        "show_progress_bar": true,
+        "confirmation_message": "Thank you for your feedback!"
+      },
+      "fields": [
+        {
+          "id": "field1",
+          "type": "text",
+          "label": "Full Name",
+          "required": true,
+          "placeholder": "Enter your full name",
+          "order": 1
+        },
+        {
+          "id": "field2",
+          "type": "email",
+          "label": "Email Address",
+          "required": true,
+          "placeholder": "your.email@example.com",
+          "order": 2
+        },
+        {
+          "id": "field3",
+          "type": "select",
+          "label": "How did you hear about us?",
+          "required": true,
+          "options": ["Social Media", "Google Search", "Friend Referral", "Advertisement", "Other"],
+          "order": 3
+        },
+        {
+          "id": "field4",
+          "type": "radio",
+          "label": "Overall satisfaction",
+          "required": true,
+          "options": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+          "order": 4
+        },
+        {
+          "id": "field5",
+          "type": "textarea",
+          "label": "Additional Comments",
+          "required": false,
+          "placeholder": "Share any additional thoughts...",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Event Registration",
+      "description": "Register for our upcoming tech conference",
+      "status": "published",
+      "created_at": "2024-01-10T09:00:00Z",
+      "updated_at": "2024-01-18T16:20:00Z",
+      "user_id": "user1",
+      "settings": {
+        "allow_multiple_responses": false,
+        "collect_email": true,
+        "show_progress_bar": true,
+        "confirmation_message": "Registration successful! Check your email for details."
+      },
+      "fields": [
+        {
+          "id": "field6",
+          "type": "text",
+          "label": "Full Name",
+          "required": true,
+          "placeholder": "Enter your full name",
+          "order": 1
+        },
+        {
+          "id": "field7",
+          "type": "email",
+          "label": "Email Address",
+          "required": true,
+          "placeholder": "your.email@example.com",
+          "order": 2
+        },
+        {
+          "id": "field8",
+          "type": "select",
+          "label": "Job Title",
+          "required": true,
+          "options": ["Developer", "Designer", "Product Manager", "CEO/Founder", "Student", "Other"],
+          "order": 3
+        },
+        {
+          "id": "field9",
+          "type": "checkbox",
+          "label": "Sessions of Interest",
+          "required": false,
+          "options": ["AI & Machine Learning", "Web Development", "Mobile Development", "DevOps", "UI/UX Design"],
+          "order": 4
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Product Feature Request",
+      "description": "Tell us what features you'd like to see next",
+      "status": "draft",
+      "created_at": "2024-01-22T11:15:00Z",
+      "updated_at": "2024-01-22T11:15:00Z",
+      "user_id": "user1",
+      "settings": {
+        "allow_multiple_responses": true,
+        "collect_email": false,
+        "show_progress_bar": false,
+        "confirmation_message": "Thanks for your suggestion!"
+      },
+      "fields": [
+        {
+          "id": "field10",
+          "type": "text",
+          "label": "Feature Name",
+          "required": true,
+          "placeholder": "What would you call this feature?",
+          "order": 1
+        },
+        {
+          "id": "field11",
+          "type": "textarea",
+          "label": "Feature Description",
+          "required": true,
+          "placeholder": "Describe the feature in detail...",
+          "order": 2
+        },
+        {
+          "id": "field12",
+          "type": "radio",
+          "label": "Priority Level",
+          "required": true,
+          "options": ["Critical", "High", "Medium", "Low"],
+          "order": 3
+        }
+      ]
+    }
+  ]
+}

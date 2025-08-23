@@ -1,0 +1,81 @@
+{
+  "responses": [
+    {
+      "id": "resp1",
+      "form_id": "1",
+      "submitted_at": "2024-01-21T14:30:00Z",
+      "answers": [
+        {
+          "field_id": "field1",
+          "value": "John Smith"
+        },
+        {
+          "field_id": "field2",
+          "value": "john.smith@email.com"
+        },
+        {
+          "field_id": "field3",
+          "value": "Google Search"
+        },
+        {
+          "field_id": "field4",
+          "value": "Very Satisfied"
+        },
+        {
+          "field_id": "field5",
+          "value": "Great service, keep it up!"
+        }
+      ]
+    },
+    {
+      "id": "resp2",
+      "form_id": "1",
+      "submitted_at": "2024-01-21T16:45:00Z",
+      "answers": [
+        {
+          "field_id": "field1",
+          "value": "Sarah Johnson"
+        },
+        {
+          "field_id": "field2",
+          "value": "sarah.j@email.com"
+        },
+        {
+          "field_id": "field3",
+          "value": "Friend Referral"
+        },
+        {
+          "field_id": "field4",
+          "value": "Satisfied"
+        },
+        {
+          "field_id": "field5",
+          "value": "Good experience overall"
+        }
+      ]
+    },
+    {
+      "id": "resp3",
+      "form_id": "2",
+      "submitted_at": "2024-01-20T10:20:00Z",
+      "answers": [
+        {
+          "field_id": "field6",
+          "value": "Mike Chen"
+        },
+        {
+          "field_id": "field7",
+          "value": "mike.chen@tech.com"
+        },
+        {
+          "field_id": "field8",
+          "value": "Developer"
+        },
+        {
+          "field_id": "field9",
+          "value": ["AI & Machine Learning", "Web Development"]
+        }
+      ]
+    }
+  ]
+}
