@@ -14,6 +14,7 @@ export interface Form {
   id: number
   user_id: number
   status?: number
+  state?: number
   title: string
   description: string | null
   is_published: boolean
@@ -21,6 +22,8 @@ export interface Form {
   collect_email: boolean
   created_at: string
   updated_at: string
+  author_img?: string
+  author_name?: string
   settings?: {
     allow_multiple_responses: boolean,
     collect_email: boolean,

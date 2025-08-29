@@ -97,12 +97,12 @@ const Navbar = () => {
                                 </Avatar>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <Link href="/profile">
+                                <a href="/profile">
                                     <DropdownMenuItem>
                                         <User className="w-4 h-4 mr-2" />
                                         Profile
                                     </DropdownMenuItem>
-                                </Link>
+                                </a>
 
                                 <Link className="mb-2" href="/dashboard" target="_blank">
                                     <DropdownMenuItem>

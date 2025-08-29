@@ -2,6 +2,7 @@
 
 import axiosInstance from "@/lib/axiosInstance";
 import { PublishedForm } from "@/lib/surveyTypes";
+import { ItagUser } from "@/lib/userTypes";
 import { AxiosResponse } from "axios";
 
 
@@ -27,8 +28,8 @@ const deleteSurvey = async (id: number|string) => {
   const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/survey-delete", id);
   return res.data;
 };
-const searchEmployee = async ({Search}:{Search: string}) => {
-  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/search-employee", {Search});
+const searchEmployee = async ({Search, formId}:{Search: string, formId?: number}) => {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/search-employee", {Search, formId});
   return res.data;
 };
 const getFormFields = async ({id}:{id: number}) => {
@@ -47,6 +48,35 @@ const getUserResponse = async ({formId}:{formId:number}) => {
 };
 
 
+const formApprove = async (data:{formId: number; state: number; remark: string; approvalId: number})=> {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/approve-form", data);
+  return res.data;
+}
+
+
+const tagForm = async (data:ItagUser)=> {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/form-tag", data);
+  return res.data;
+}
+
+
+const questionTagList = async (data:{form_id: number; question_id: number})=> {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/questions-taglist", data);
+  return res.data;
+}
+
+
+const tagApproval = async (data:{form_id: number})=> {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/form-taglist", data);
+  return res.data;
+}
+
+
+const removeTag = async (data:{id: number})=> {
+  const res: AxiosResponse = await axiosInstance.post("EmployeeVoice/remove-tag", data);
+  return res.data;
+}
+
 
 
 
@@ -59,5 +89,10 @@ export const surveyApi = {
      searchEmployee,
      getFormFields,
      sendResponse,
-     getUserResponse
+     getUserResponse,
+     formApprove,
+     tagForm,
+     questionTagList,
+     tagApproval,
+     removeTag
     };

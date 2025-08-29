@@ -1,81 +1,75 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import {
   PlusIcon,
-  FileTextIcon,
-  BarChartIcon,
-  Pencil1Icon,
-  EyeOpenIcon,
-  Share1Icon,
-  TrashIcon,
-  CopyIcon,
-  DotsHorizontalIcon,
   MagnifyingGlassIcon,
+  ClockIcon,
+  CheckCircledIcon,
 } from "@radix-ui/react-icons"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ApiClient } from "@/lib/api-client"
+
+import { toast } from "@/components/ui/use-toast"
 import type { Form } from "@/lib/database"
 import { surveyApi } from "@/apis/survey"
-import DashboardHeader from "./_components/header"
 import QuickStats from "./_components/quickStats"
-import RecentIssues from "./_components/recentIssues"
+import EmptyState from "./_components/emptyState"
+import FormCard, { FormCardSkeleton } from "./_components/formCard"
+import useStore from "@/store"
+import { hasValidDesignation } from "@/constents"
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter] = useState<"all" | "published" | "draft">("all")
+  const [statusFilter, setStatusFilter] = useState<number | "all">("all")
 
-const queryClient = useQueryClient();
+  const loginUser = useStore((state) => state.loginUser)
 
-const surveyHeaderDelete = useMutation({
-  mutationKey: ["deleteSurvey"],
-  mutationFn: surveyApi.deleteSurvey,
-  // @ts-ignore
-  onMutate: async ({ id }) => {
-    // Cancel ongoing dashboard fetches
-    await queryClient.cancelQueries({ queryKey: ["dashboard"] });
+  const queryClient = useQueryClient();
 
-    // Get previous cache
-    const previousDashboard = queryClient.getQueryData<Form[]>(["dashboard"]);
+  const surveyHeaderDelete = useMutation({
+    mutationKey: ["deleteSurvey"],
+    mutationFn: surveyApi.deleteSurvey,
+    // @ts-ignore
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ["dashboard"] });
+      const previousDashboard = queryClient.getQueryData<Form[]>(["dashboard"]);
 
-    // Optimistically update UI
-    queryClient.setQueryData<Form[]>(["dashboard"], (old) =>
-      old ? old.filter((form) => form.id !== Number(id)) : []
-    );
+      queryClient.setQueryData<Form[]>(["dashboard"], (old) =>
+        old ? old.filter((form) => form.id !== Number(id)) : []
+      );
 
-    return { previousDashboard };
-  },
-  onError: (_err, _id, context) => {
-    // Rollback if mutation fails
-    if (context?.previousDashboard) {
-      queryClient.setQueryData(["dashboard"], context.previousDashboard);
-    }
-  },
-  onSettled: () => {
-    // Refetch final data
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-  },
-});
+      return { previousDashboard };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousDashboard) {
+        queryClient.setQueryData(["dashboard"], context.previousDashboard);
+      }
+      toast({
+        title: "Error deleting form",
+        description: "There was a problem deleting your form. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Form deleted",
+        description: "Your form has been successfully deleted.",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 
-
-const { data: dashboardData = [], isLoading } = useQuery({
-  queryKey: ["dashboard"],
-  queryFn: surveyApi.dashboardInfo,
-});
-
+  const { data: dashboardData = [], isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: surveyApi.dashboardInfo,
+  });
 
   const [filteredForms, setFilteredForms] = useState<Form[]>([])
 
@@ -91,254 +85,214 @@ const { data: dashboardData = [], isLoading } = useQuery({
       )
     }
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((form: any) =>
-        statusFilter === "published" ? form.is_published : !form.is_published
-      )
+
+
+    if (statusFilter === 1) {
+      filtered = filtered.filter((form: any) => form.state === 1);
+    } else if (statusFilter == "all") {
+      if (hasValidDesignation(loginUser)) {
+        filtered = filtered.filter((form: any) => form.state === 1 || form.state === 2 || form.state === 3);
+      } else {
+        filtered = filtered.filter((form: any) => form.state === 2);
+      }
     }
+
 
     setFilteredForms(filtered)
   }, [dashboardData, searchQuery, statusFilter])
 
   const handleDuplicateForm = async (form: Form) => {
     try {
-      console.log("Duplicating form:", form.id)
-      // TODO: Implement duplication
+      // TODO: Implement duplication API call
+      toast({
+        title: "Duplicating form...",
+        description: "Your form is being duplicated.",
+      });
     } catch (error) {
       console.error("Error duplicating form:", error)
+      toast({
+        title: "Error duplicating form",
+        description: "There was a problem duplicating your form. Please try again.",
+        variant: "destructive",
+      });
     }
   }
 
-const handleDeleteForm = async (formId: number) => {
-  if (!formId) return;
-  // @ts-ignore
-  surveyHeaderDelete.mutate({ id: formId + "" });
-};
-
+  const handleDeleteForm = async (formId: number) => {
+    if (!formId) return;
+    // @ts-ignore
+    surveyHeaderDelete.mutate({ id: formId.toString() });
+  }
 
   const copyFormLink = (formId: number) => {
     const formUrl = `${window.location.origin}/forms/${formId}`
     navigator.clipboard.writeText(formUrl)
-    // TODO: Show toast notification
+    toast({
+      title: "Link copied!",
+      description: "Form link has been copied to clipboard.",
+    });
   }
 
-  const getResponseCount = (formId: number) => {
-    // TODO: Replace with actual data from API
-    const mockCounts: Record<number, number> = { 1: 24, 2: 156, 3: 0 }
-    return mockCounts[formId] || 0
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading forms...</p>
-        </div>
-      </div>
-    )
+  const getStatusBadge = (state: number) => {
+    switch (state) {
+      case 2: // Published
+        return <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
+          <CheckCircledIcon className="w-3 h-3 mr-1" />
+          Published
+        </Badge>
+      case 1: // Pending approval
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200">
+          <ClockIcon className="w-3 h-3 mr-1" />
+          Pending Approval
+        </Badge>
+      default:
+        return <Badge variant="destructive" className="text-white border-gray-300">
+          Rejected From Approval
+        </Badge>
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <DashboardHeader />
+        {/* <DashboardHeader /> */}
         <QuickStats />
 
-        {/* Search */}
+        {/* Search and Filter Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6"
+          className="mb-8"
         >
-          <div className="relative max-w-md mx-auto">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search forms..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-blue-300 focus:border-blue-500 focus:ring-blue-500"
-            />
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search forms by title or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap lg:flex-nowrap gap-2">
+            {hasValidDesignation(loginUser) && <Link href="/forms/create">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <PlusIcon className="w-4 h-4" />
+                  Create Form
+                </Button>
+              </Link>}
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+              >
+                All Forms
+              </Button>
+              {hasValidDesignation(loginUser) && (
+                loginUser?.designationID === "462" ||
+                loginUser?.designationID === "1639" ||
+                loginUser?.designationID === "555"
+              ) && (
+                <Button
+                  variant={statusFilter === 1 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter(1)}
+                >
+                  Pending Approval
+                </Button>
+              )}
+              <Button
+                variant={statusFilter === -3 ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(-3)}
+              >
+                Share Responsibilities
+              </Button>
+            </div>
           </div>
         </motion.div>
 
         {/* Forms Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {filteredForms.map((form, index) => (
-            <FormCard
-              key={form.id}
-              form={form}
-              index={index}
-              onDuplicate={handleDuplicateForm}
-              onDelete={handleDeleteForm}
-              onCopyLink={copyFormLink}
-              responseCount={getResponseCount(form.id)}
-            />
-          ))}
-        </motion.div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <FormCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : statusFilter == 1 ? <>
+          {filteredForms.length > 0 && (
+            <p className="text-sm text-gray-600 mb-4">
+              Showing {filteredForms.length} of {dashboardData.length} forms
+            </p>
+          )}
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              layout
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filteredForms.map((form, index) => (
+                <FormCard
+                  key={form.id}
+                  form={form}
+                  index={index}
+                  onDuplicate={handleDuplicateForm}
+                  onDelete={handleDeleteForm}
+                  onCopyLink={copyFormLink}
+                  getStatusBadge={getStatusBadge}
+                />
+              ))}
+            </motion.div>
+          </AnimatePresence>
 
-        {filteredForms.length === 0 && (
-          <EmptyState
-            hasSearch={!!searchQuery || statusFilter !== "all"}
-          />
+          {filteredForms.length === 0 && (
+            <div>
+              <strong>There are no panding list...</strong>
+            </div>
+          )}
+        </> : statusFilter == -2 ? <>
+          <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Error asperiores aut accusamus repudiandae necessitatibus natus, explicabo itaque possimus rerum deleniti, expedita id quod, impedit sed voluptatibus porro quis nesciunt temporibus?</p>
+        </> : statusFilter == -3 ? <>
+          <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nam, provident aliquam quisquam illum, repellat porro necessitatibus optio maxime nisi blanditiis expedita magnam aliquid incidunt nesciunt suscipit ratione minima illo saepe.</p></> : (
+          <>
+            {filteredForms.length > 0 && (
+              <p className="text-sm text-gray-600 mb-4">
+                Showing {filteredForms.length} of {filteredForms.length} forms
+              </p>
+            )}
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {filteredForms.map((form, index) => (
+                  <FormCard
+                    key={form.id}
+                    form={form}
+                    index={index}
+                    onDuplicate={handleDuplicateForm}
+                    onDelete={handleDeleteForm}
+                    onCopyLink={copyFormLink}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+              </motion.div>
+            </AnimatePresence>
+
+            {filteredForms.length === 0 && (
+              <EmptyState
+                hasSearch={!!searchQuery}
+                hasFilter={statusFilter !== "all"}
+              />
+            )}
+          </>
         )}
-        <br /><br />
-        {/* <RecentIssues /> */}
-      </div>
 
+        <br /><br />
+
+      </div>
     </div>
   )
 }
 
-type FormCardProps = {
-  form: Form
-  index: number
-  onDuplicate: (form: Form) => void
-  onDelete: (id: number) => void
-  onCopyLink: (id: number) => void
-  responseCount: number
-}
-
-const FormCard = ({
-  form,
-  index,
-  onDuplicate,
-  onDelete,
-  onCopyLink,
-  responseCount
-}: FormCardProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.1 * index }}
-    whileHover={{ y: -5 }}
-    className="group"
-  >
-    <Card className="h-full hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <CardTitle className="text-lg">{form.title}</CardTitle>
-              <Badge variant="default">
-                Published
-              </Badge>
-            </div>
-            <CardDescription>{form.description}</CardDescription>
-          </div>
-          <FormActionsMenu
-            formId={form.id}
-            onDuplicate={() => onDuplicate(form)}
-            onDelete={() => onDelete(form.id)}
-            onCopyLink={() => onCopyLink(form.id)}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-          <span>{form.totalResponse} responses</span>
-          <span>Created {new Date(form.created_at).toLocaleDateString()}</span>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/forms/response?id=${form.id}`} className="flex-1">
-            <Button variant="outline" size="sm" className="w-full bg-transparent">
-
-              <EyeOpenIcon className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
-          </Link>
-          <Link href={`/forms/test-responses?id=${form.id}`} className="flex-1">
-            <Button variant="outline" size="sm" className="w-full bg-transparent">
-              <BarChartIcon className="w-3 h-3 mr-1" />
-              Responses
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  </motion.div>
-)
-
-type FormActionsMenuProps = {
-  formId: number
-  onDuplicate: () => void
-  onDelete: () => void
-  onCopyLink: () => void
-}
-
-const FormActionsMenu = ({ formId, onDuplicate, onDelete, onCopyLink }: FormActionsMenuProps) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <DotsHorizontalIcon className="w-4 h-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
-      {/* <Link href={`/forms/${formId}/edit`}>
-        <DropdownMenuItem>
-          <Pencil1Icon className="w-4 h-4 mr-2" />
-          Edit
-        </DropdownMenuItem>
-      </Link> */}
-      <Link href={`/forms/response?id=${formId}`}>
-        <DropdownMenuItem>
-          <EyeOpenIcon className="w-4 h-4 mr-2" />
-          Preview
-        </DropdownMenuItem>
-      </Link>
-      {/* <DropdownMenuItem onClick={onCopyLink}>
-        <Share1Icon className="w-4 h-4 mr-2" />
-        Copy Link
-      </DropdownMenuItem> */}
-      {/* <DropdownMenuItem onClick={onDuplicate}>
-        <CopyIcon className="w-4 h-4 mr-2" />
-        Duplicate
-      </DropdownMenuItem> */}
-      <DropdownMenuSeparator />
-      <DropdownMenuItem
-        onClick={onDelete}
-        className="text-red-600 focus:text-red-600"
-      >
-        <TrashIcon className="w-4 h-4 mr-2" />
-        Delete
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-)
-
-type EmptyStateProps = {
-  hasSearch: boolean
-}
-
-const EmptyState = ({ hasSearch }: EmptyStateProps) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-    <FileTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-    <h3 className="text-lg font-medium text-gray-900 mb-2">
-      {hasSearch ? "No forms found" : "No forms yet"}
-    </h3>
-    <p className="text-gray-600 mb-4">
-      {hasSearch
-        ? "Try adjusting your search or filter criteria"
-        : "Get started by creating your first form"}
-    </p>
-    {!hasSearch && (
-      <a href="/forms/create">
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Create Your First Form
-        </Button>
-      </a>
-    )}
-
-  </motion.div>
-)

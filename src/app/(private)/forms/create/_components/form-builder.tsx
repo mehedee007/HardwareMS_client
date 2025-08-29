@@ -12,11 +12,11 @@ import {
   PlusIcon,
   TrashIcon,
   DragHandleDots2Icon,
-  StarIcon,
   Pencil2Icon,
   CheckIcon,
 } from "@radix-ui/react-icons";
 import type { FormField } from "@/lib/database";
+// import UseAI from "./useAi";
 
 interface FormBuilderProps {
   fields: Omit<FormField, "id" | "form_id" | "created_at">[];
@@ -30,8 +30,8 @@ const fieldTypes = [
   { value: "number", label: "Number" },
   { value: "date", label: "Date" },
   { value: "select", label: "Dropdown" },
-  { value: "radio", label: "Multiple Choice" },
-  { value: "checkbox", label: "Checkboxes" },
+  { value: "radio", label: "Single Choice" },
+  { value: "checkbox", label: "Multiple Choice" },
   // { value: "file", label: "File Upload" },
   { value: "rating", label: "Star Rating" },
 ];
@@ -40,13 +40,14 @@ export function FormBuilder({ fields, onFieldsChange }: FormBuilderProps) {
   const [editingField, setEditingField] = useState<number | null>(null);
 
   const addField = (type: FormField["field_type"]) => {
+    const label = `${type=="checkbox"? "Multiple Choice": type=="radio" ? "Single Choice": type} field`.charAt(0).toUpperCase() + `${type=="checkbox"? "Multiple Choice": type=="radio" ? "Single Choice": type} field`.slice(1)
     const newField: Omit<FormField, "id" | "form_id" | "created_at"> = {
       field_type: type,
-      label: `New ${type} field`,
+      label: label,
       placeholder: type === "textarea" ? "Enter your response..." : "Enter text...",
       is_required: false,
       options: ["select", "radio", "checkbox"].includes(type) ? ["Option 1", "Option 2"] : null,
-      field_order: fields.length + 1,
+      field_order: 1, // This will be updated in the reordering below
       ...(type === "file" && {
         file_max_size: 10,
         file_max_count: 1,
@@ -55,8 +56,14 @@ export function FormBuilder({ fields, onFieldsChange }: FormBuilderProps) {
       ...(type === "rating" && { rating_max: 5 }),
     };
 
-    onFieldsChange([...fields, newField]);
-    setEditingField(fields.length);
+    // Add new field at the beginning and update field_order for all fields
+    const updatedFields = [
+      newField,
+      ...fields.map((field, index) => ({ ...field, field_order: index + 2 }))
+    ];
+
+    onFieldsChange(updatedFields);
+    setEditingField(0); // Set to edit the first field (the newly added one)
   };
 
   const updateField = (index: number, updates: Partial<Omit<FormField, "id" | "form_id" | "created_at">>) => {
@@ -89,6 +96,14 @@ export function FormBuilder({ fields, onFieldsChange }: FormBuilderProps) {
                 <span className="text-xs">{type.label}</span>
               </Button>
             ))}
+            {/* <UseAI>
+              <Button
+                variant="outline"
+                className="h-auto p-3 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300 w-full"
+              >
+                <span className="text-xs">Create use AI</span>
+              </Button>
+            </UseAI> */}
           </div>
         </CardContent>
       </Card>
@@ -108,7 +123,7 @@ export function FormBuilder({ fields, onFieldsChange }: FormBuilderProps) {
                 <CardHeader className="pb-3 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <DragHandleDots2Icon className="w-4 h-4 text-gray-400 cursor-move" />
-                    <Badge variant="secondary">{field.field_type}</Badge>
+                    <Badge variant="secondary">{field.label}</Badge>
                     {field.is_required && <Badge variant="destructive">Required</Badge>}
                   </div>
                   <div className="flex items-center gap-2">

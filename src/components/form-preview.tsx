@@ -225,7 +225,7 @@ export function FormPreview({ title, description, fields, collectEmail }: FormPr
               </div>
             )}
 
-            {fields.map((field, index) => (
+            {fields.toReversed().map((field, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 10 }}

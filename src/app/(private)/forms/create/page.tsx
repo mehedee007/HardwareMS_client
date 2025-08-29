@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { FormBuilder } from "@/components/form-builder"
+import { FormBuilder } from "./_components/form-builder"
 import { FormPreview } from "@/components/form-preview"
 import { ArrowLeftIcon, EyeOpenIcon, Pencil1Icon, CheckIcon } from "@radix-ui/react-icons"
 import Link from "next/link"
@@ -17,7 +16,6 @@ import useStore from "@/store"
 import { toast } from "sonner"
 import { useMutation } from "@tanstack/react-query"
 import { surveyApi } from "@/apis/survey"
-import { constents } from "@/constents"
 import { useRouter } from "next/navigation"
 
 export default function CreateFormPage() {
@@ -25,21 +23,10 @@ export default function CreateFormPage() {
   const [formTitle, setFormTitle] = useState("")
   const [formDescription, setFormDescription] = useState("")
   const [collectEmail, setCollectEmail] = useState(false)
-  const [allowMultipleResponses, setAllowMultipleResponses] = useState(true)
   const [fields, setFields] = useState<Omit<FormField, "id" | "form_id" | "created_at">[]>([])
 
   const userData = useStore((state) => state.loginUser);
 
-  const handleSaveForm = async () => {
-    // TODO: Implement form saving with API
-    console.log("Saving form:", {
-      title: formTitle,
-      description: formDescription,
-      collectEmail,
-      allowMultipleResponses,
-      fields,
-    })
-  }
 
   const router = useRouter();
 

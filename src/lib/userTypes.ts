@@ -70,3 +70,17 @@ export interface INav {
   name: string;
   path: string;
 }
+
+
+
+export interface ItagUser {
+  id?: number;
+  adminId: number;
+  field_type: string | number;
+  form_id: number;
+  number_of_responses: number;
+  question: string;
+  question_id: number;
+  tagsWith?: number[];
+  type?: number
+}
