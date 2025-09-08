@@ -29,6 +29,7 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer"
+import ThemeChange from "@/components/shared/theme";
 
 
 
@@ -65,6 +66,7 @@ const Navbar = () => {
 
                     </div>
                     <div className="flex items-center gap-3">
+                        {/* <ThemeChange /> */}
                         <a href="/dashboard"><Button variant="outline">Dashboard</Button></a>
                         {/* <Drawer direction="right">
                             <DrawerTrigger className="border p-2 rounded-full"><LayoutDashboard /></DrawerTrigger>

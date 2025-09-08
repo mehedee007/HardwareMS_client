@@ -35,6 +35,8 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { surveyApi } from "@/apis/survey";
+import { AxiosResponse } from "axios";
+import axiosInstance from "@/lib/axiosInstance";
 
 // ======================================================================
 // Type Definitions
@@ -253,15 +255,19 @@ const FormFieldComponent = ({ field, responses, onInputChange, error }: FormFiel
 
 export default function FormPreview() {
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [remarks, setRemarks] = useState<string>("");
     const [selectedEmp, setSelectedEmp] = useState<number | null>(null);
     const [responses, setResponses] = useState<Record<number, any>>({});
     const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
 
     const router = useRouter();
     const searchParams = useSearchParams();
-    const formId = searchParams.get("id");
-    const employeeData = useStore((state) => state.loginUser);
+    const formId = searchParams.get("id"); //1037
+    const empId = searchParams.get("empId"); //25620
+
+
+
+
+
 
     const {
         data: formData,
@@ -279,15 +285,20 @@ export default function FormPreview() {
         enabled: !!formId,
     });
 
-    const debouncedSearch = useMemo(() => {
-        let timeout: NodeJS.Timeout;
-        return (value: string) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                setSearchQuery(value);
-            }, 300);
-        };
-    }, []);
+    // const debouncedSearch = useMemo(() => {
+    //     let timeout: NodeJS.Timeout;
+    //     return (value: string = empId+'') => {
+    //         clearTimeout(timeout);
+    //         timeout = setTimeout(() => {
+    //             setSearchQuery(value);
+    //         }, 300);
+    //     };
+    // }, []);
+
+    useEffect(() => {
+        setSearchQuery(empId + '');
+        setSelectedEmp(Number(empId));
+    }, [empId])
 
     const { data: searchEmpData, isLoading: isEmpLoading } = useQuery<IEmployee[]>({
         queryKey: ["searchEmp", searchQuery, formId],
@@ -324,17 +335,6 @@ export default function FormPreview() {
 
 
 
-    const { mutate: approveFormMutate } = useMutation({
-        mutationFn: surveyApi.formApprove,
-        onSuccess: () => {
-            toast.success("Form status updated successfully! ✅");
-            router.push("/dashboard");
-        },
-        onError: (error) => {
-            console.error("Approval/rejection failed:", error);
-            toast.error("Failed to update form status. Please try again.");
-        },
-    });
 
     const handleInputChange = useCallback((fieldId: number, fieldType: string, value: any) => {
         setResponses((prev) => ({ ...prev, [fieldId]: value }));
@@ -399,7 +399,7 @@ export default function FormPreview() {
 
             return {
                 formId: formData.surveyHeader.id,
-                adminId: employeeData?.empID,
+                adminId: empId,
                 questionID: field.id,
                 questionType: field.field_type.toLowerCase(),
                 answer: answerValue
@@ -408,12 +408,12 @@ export default function FormPreview() {
 
         if (formattedResponses && formattedResponses.length > 0) {
             const newFormattedResponses = formattedResponses.map((response) => ({
-                answer: typeof response.answer === "string" ? response.answer :  JSON.stringify(response.answer),
+                answer: typeof response.answer === "string" ? response.answer : JSON.stringify(response.answer),
                 formId: response.formId,
                 questionId: response.questionID,
                 questionTypeTitle: response.questionType,
                 empId: selectedEmp || 1,
-                adminId: Number(employeeData?.empID) || selectedEmp || 1
+                adminId: Number(empId) || selectedEmp || 1
             }));
 
             sendResponseMutate(newFormattedResponses);
@@ -424,19 +424,7 @@ export default function FormPreview() {
         }
     };
 
-    const handleApprove = (state: number) => {
-        if (!formData?.surveyHeader || !employeeData) {
-            toast.error("Required data for approval is missing.");
-            return;
-        }
-        const obj = {
-            formId: Number(formData.surveyHeader.id),
-            state: state,
-            remark: remarks,
-            approvalId: Number(employeeData.empID),
-        };
-        approveFormMutate(obj);
-    };
+
 
     if (isFormLoading) {
         return (
@@ -478,10 +466,6 @@ export default function FormPreview() {
                 className="mb-8 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between"
             >
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                        <ArrowLeftIcon className="mr-2 h-4 w-4" />
-                        Back
-                    </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{surveyHeader.title || "Untitled Form"}</h1>
                         <p className="mt-1 text-gray-600 dark:text-gray-400">{surveyHeader.description || "No description provided."}</p>
@@ -498,17 +482,8 @@ export default function FormPreview() {
                 <Card className="rounded-xl shadow-lg dark:bg-gray-800">
                     <CardContent className="space-y-8 p-6 md:p-8">
                         <div>
-                            <Label htmlFor="search-employee" className="text-sm font-medium">Find Employee <span className="text-red-500 dark:text-red-400">*</span></Label>
-                            <div className="relative mt-2">
-                                <Input
-                                    id="search-employee"
-                                    type="text"
-                                    placeholder="Search by ID or Name"
-                                    onChange={(e) => debouncedSearch(e.target.value)}
-                                    className="w-full"
-                                />
-                                {isEmpLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2"><Loader2 className="h-5 w-5 animate-spin text-blue-500" /></div>}
-                            </div>
+                            <Label htmlFor="search-employee" className="text-sm font-medium">IF Will It You, Please Select <span className="text-red-500 dark:text-red-400">*</span></Label>
+                            
                             {searchEmpData && searchEmpData.length > 0 && (
                                 <div className="mt-3 max-h-72 space-y-2 overflow-y-auto rounded-lg border bg-white p-2 shadow-inner dark:bg-gray-900">
                                     {searchEmpData.map((emp) => (
@@ -579,67 +554,22 @@ export default function FormPreview() {
                             </div>
                         )}
 
-                        {surveyHeader.state === 1 && (employeeData?.designationID === "462" || employeeData?.designationID === "1639" || employeeData?.designationID === "555") ? (
-                            <div className="bg-secondary rounded-4xl p-10 flex flex-col items-center justify-center gap-5">
-                                <strong>Please Review this form!</strong>
-                                <div className="flex items-center justify-center gap-2">
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild><Button>Approve</Button></AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleApprove(2)}>Continue</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild><Button variant="destructive">Reject</Button></AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription className="text-red-500">
-                                                    This action cannot be undone. This will permanently reject the form.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <Label htmlFor="reject-remark">Remark</Label>
-                                            <Textarea onChange={(e) => setRemarks(e.target.value)} id="reject-remark" placeholder="Enter reason for rejection" required />
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleApprove(3)}>Continue</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
-                            </div>
-                        ) : surveyHeader.state === 3 ? (
-                            <p className="text-red-500 font-bold">This form has been rejected from approval!</p>
-                        ) : surveyHeader.state === 1 ? (
-                            <p className="text-yellow-400 font-bold">This form needs approval from HR admin.</p>
-                        ) : surveyHeader.state === 0 ? (
-                            <p className="text-red-500">This form has been deleted!</p>
-                        ) : (
-                            <div className="pt-4">
-                                <Button
-                                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        "Submit Form"
-                                    )}
-                                </Button>
-                            </div>
-                        )}
+                        <div className="pt-4">
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    "Submit Form"
+                                )}
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>

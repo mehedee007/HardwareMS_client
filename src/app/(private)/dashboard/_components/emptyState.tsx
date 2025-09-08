@@ -25,12 +25,12 @@ const EmptyState = ({ hasSearch, hasFilter }: EmptyStateProps) => (
         : "Get started by creating your first form to collect responses and insights."}
     </p>
     {!hasSearch && (
-      <Link href="/forms/create">
+      <a href="/forms/create">
         <Button variant="ghost">
           <PlusIcon className="w-4 h-4 mr-2" />
           Create Your First Form
         </Button>
-      </Link>
+      </a>
     )}
   </motion.div>
 )

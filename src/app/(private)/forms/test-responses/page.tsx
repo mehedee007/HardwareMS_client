@@ -28,9 +28,10 @@ import FormAnalytics from "./_components/FormAnalytics";
 import TagWithResponsiblePerson from "./_components/tagResponsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import useStore from "@/store";
-import { Share } from "lucide-react";
+import { Clock, Share } from "lucide-react";
 import TagQuestion from "./_components/tagQuestion";
 import ApprovalTagPerson from "./_components/approveTag";
+import Timeline from "./_components/timeLine";
 
 interface Field {
   id: number;
@@ -246,9 +247,13 @@ export default function FormResponsesPage() {
               </Badge>
             </div>
             <div className="mt-4 md:mt-0 flex-shrink-0">
-              <ApprovalTagPerson>
-                <Button>Approve Tags</Button>
-              </ApprovalTagPerson>
+              {loginUser?.designationID &&
+                ['462', '1639', '555'].includes(loginUser.designationID) && (
+                  <ApprovalTagPerson>
+                    <Button>Approve Tags</Button>
+                  </ApprovalTagPerson>
+                )}
+
             </div>
           </div>
         </div>
@@ -312,7 +317,7 @@ export default function FormResponsesPage() {
                               >
                                 <div className="flex items-center justify-center gap-2">
                                   <span>{field.label}</span>
-                                  <TagQuestion question={{
+                                  {loginUser?.designationID && loginUser?.designationID == '508' && <TagQuestion question={{
                                     form_id: Number(formId),
                                     question_id: field.id,
                                     question: field.label,
@@ -321,7 +326,17 @@ export default function FormResponsesPage() {
                                     adminId: loginUser?.empID || 1
                                   }}>
                                     <Button className="w-fit rounded-full border flex" variant="default" size="sm"><Share /></Button>
-                                  </TagQuestion>
+                                  </TagQuestion>}
+                                  {loginUser?.designationID &&
+                                    ['462', '1639', '555'].includes(loginUser.designationID) && (
+                                      <Timeline question_id={field.id} form_id={Number(formId)}>
+                                        <Button className="w-fit rounded-full border flex" variant="default" size="sm">
+                                          <Clock />
+                                        </Button>
+                                      </Timeline>
+
+                                    )}
+
                                 </div>
                               </TableHead>
                             ))}

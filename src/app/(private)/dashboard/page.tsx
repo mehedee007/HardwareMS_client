@@ -22,6 +22,7 @@ import EmptyState from "./_components/emptyState"
 import FormCard, { FormCardSkeleton } from "./_components/formCard"
 import useStore from "@/store"
 import { hasValidDesignation } from "@/constents"
+import Responsible from "./_components/responsible"
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -66,10 +67,18 @@ export default function HomePage() {
     },
   });
 
-  const { data: dashboardData = [], isLoading } = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: surveyApi.dashboardInfo,
+  const { mutate: useGetDashboard, data: dashboardData = [], isPending: isLoading } = useMutation({
+    mutationFn: surveyApi.dashboardInfo,
   });
+
+  useEffect(() => {
+    useGetDashboard({ deg_id: Number(loginUser?.designationID) })
+  }, [])
+
+  // const { data: dashboardData = [], isLoading } = useQuery({
+  //   queryKey: ["dashboard"],
+  //   queryFn: surveyApi.dashboardInfo,
+  // });
 
   const [filteredForms, setFilteredForms] = useState<Form[]>([])
 
@@ -125,7 +134,7 @@ export default function HomePage() {
   }
 
   const copyFormLink = (formId: number) => {
-    const formUrl = `${window.location.origin}/forms/${formId}`
+    const formUrl = `${window.location.origin}/forms/form-respones/?id=${formId}`
     navigator.clipboard.writeText(formUrl)
     toast({
       title: "Link copied!",
@@ -177,12 +186,12 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-wrap lg:flex-nowrap gap-2">
-            {hasValidDesignation(loginUser) && <Link href="/forms/create">
+              {hasValidDesignation(loginUser) && <a href="/forms/create">
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                   <PlusIcon className="w-4 h-4" />
                   Create Form
                 </Button>
-              </Link>}
+              </a>}
               <Button
                 variant={statusFilter === "all" ? "default" : "outline"}
                 size="sm"
@@ -195,14 +204,14 @@ export default function HomePage() {
                 loginUser?.designationID === "1639" ||
                 loginUser?.designationID === "555"
               ) && (
-                <Button
-                  variant={statusFilter === 1 ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter(1)}
-                >
-                  Pending Approval
-                </Button>
-              )}
+                  <Button
+                    variant={statusFilter === 1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter(1)}
+                  >
+                    Pending Approval
+                  </Button>
+                )}
               <Button
                 variant={statusFilter === -3 ? "default" : "outline"}
                 size="sm"
@@ -254,7 +263,8 @@ export default function HomePage() {
         </> : statusFilter == -2 ? <>
           <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Error asperiores aut accusamus repudiandae necessitatibus natus, explicabo itaque possimus rerum deleniti, expedita id quod, impedit sed voluptatibus porro quis nesciunt temporibus?</p>
         </> : statusFilter == -3 ? <>
-          <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nam, provident aliquam quisquam illum, repellat porro necessitatibus optio maxime nisi blanditiis expedita magnam aliquid incidunt nesciunt suscipit ratione minima illo saepe.</p></> : (
+          <Responsible />
+        </> : (
           <>
             {filteredForms.length > 0 && (
               <p className="text-sm text-gray-600 mb-4">
@@ -280,12 +290,14 @@ export default function HomePage() {
               </motion.div>
             </AnimatePresence>
 
-            {filteredForms.length === 0 && (
-              <EmptyState
-                hasSearch={!!searchQuery}
-                hasFilter={statusFilter !== "all"}
-              />
-            )}
+            {filteredForms.length === 0 &&
+              [462, 508, 1639, 555].includes(Number(loginUser?.designationID)) ? (
+                <EmptyState
+                  hasSearch={!!searchQuery}
+                  hasFilter={statusFilter !== "all"}
+                />
+              ): <p className="text-center my-5">Not found anything for you!</p>}
+
           </>
         )}
 

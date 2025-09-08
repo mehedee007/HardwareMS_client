@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useEffect } from "react";
+import React, { ReactNode, useState } from "react";
 import {
     Dialog,
     DialogContent,
@@ -14,46 +14,60 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { surveyApi } from "@/apis/survey";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Delete } from "lucide-react";
+import { Delete, Drone } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import useStore from "@/store";
+
+// Custom hook to fetch tagged people data
+const useTaggedPeople = (formId: string | null, isDialogOpen: boolean) => {
+    return useQuery({
+        queryKey: ['taggedPeople', formId],
+        queryFn: () => surveyApi.tagApproval({ form_id: Number(formId) }),
+        // The query will only run when the dialog is open and formId exists
+        enabled: isDialogOpen && !!formId,
+    });
+};
 
 function ApprovalTagPerson({ children }: { children: ReactNode }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [remark, setRemark] = useState("");
     const formParams = useSearchParams();
     const formId = formParams.get("id");
     const queryClient = useQueryClient();
 
-    const { mutate: useTagUser, data, isPending, isError } = useMutation({
-        mutationFn: surveyApi.tagApproval,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['taggedPeople', formId] });
-        },
-        onError: () => {
-            toast.error("Invalid tag data. Please try again.");
-        },
-    });
+    const loginuser = useStore((state)=> state.loginUser);
+
+    // Fetch data using useQuery, which is enabled based on the dialog's open state
+    const { data, isPending, isError } = useTaggedPeople(formId, isOpen);
 
     const { mutate: useRemoveTag } = useMutation({
         mutationFn: surveyApi.removeTag,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['taggedPeople', formId] });
+            toast.success("Remove done!");
         },
         onError: () => {
             toast.error("Invalid tag data. Please try again.");
         },
     });
 
-    useEffect(() => {
-        if (formId) {
-            useTagUser({ form_id: Number(formId) });
-        }
-    }, [formId]);
+    const { mutate: useApproveTags } = useMutation({
+        mutationFn: surveyApi.approveTags,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['taggedPeople', formId] });
+            toast.success("Tags approved successfully!"); // Corrected toast message
+        },
+        onError: () => {
+            toast.error("Approval failed. Please try again."); // Corrected toast message
+        },
+    });
 
-    // Group data by question
     const groupedData = data?.reduce((acc: any, item: any) => {
         if (!acc[item.question]) {
             acc[item.question] = [];
@@ -62,13 +76,29 @@ function ApprovalTagPerson({ children }: { children: ReactNode }) {
         return acc;
     }, {}) || {};
 
-    const handleRemoveTag = async (id: number) => {
-        useRemoveTag({id: id});
-    }
+    const handleRemoveTag = (id: number) => {
+        useRemoveTag({ id: id });
+    };
+
+    const handleApproveTags = () => {
+        // Collect all user IDs and the remark
+        const allTaggedUsers = Object.values(groupedData).flat();
+
+        const approveData = allTaggedUsers.map((user: any) => ({
+            id: user.id,
+            hrRemarks: remark,
+            hrAdminId: loginuser?.empID
+        }));
+
+        useApproveTags(approveData);
+        setIsOpen(!isOpen);
+    };
 
     return (
-        <Dialog>
-            <DialogTrigger>{children}</DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                {children}
+            </DialogTrigger>
             <DialogContent className="max-h-[600px] min-w-[900px] overflow-y-auto">
                 {isPending ? (
                     <p className="text-center text-blue-500">Loading...</p>
@@ -78,10 +108,7 @@ function ApprovalTagPerson({ children }: { children: ReactNode }) {
                     <div className="space-y-8">
                         {Object.keys(groupedData).map((question, index) => (
                             <div key={index} className="border-b pb-4">
-                                {/* Question Title */}
                                 <h2 className="text-lg font-semibold mb-2 border-b pb-1">{question}</h2>
-
-                                {/* Table for each question */}
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -93,9 +120,8 @@ function ApprovalTagPerson({ children }: { children: ReactNode }) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {groupedData[question].map((user: any, idx: number) => (
-                                            <TableRow key={idx}>
-                                                {/* Image */}
+                                        {groupedData[question].map((user: any) => (
+                                            <TableRow key={user.id}>
                                                 <TableCell className="text-center">
                                                     {user.image ? (
                                                         <Image
@@ -106,18 +132,16 @@ function ApprovalTagPerson({ children }: { children: ReactNode }) {
                                                             className="rounded-full border"
                                                         />
                                                     ) : (
-                                                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                                            ?
-                                                        </div>
+                                                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">?</div>
                                                     )}
                                                 </TableCell>
-
-                                                {/* User Info */}
                                                 <TableCell className="font-medium">{user.name}</TableCell>
                                                 <TableCell>{user.dept}</TableCell>
                                                 <TableCell>{user.deg}</TableCell>
                                                 <TableCell>
-                                                    <Button onClick={()=> handleRemoveTag(user.id)} variant="destructive" size="sm" className="rounded-full"><Delete /></Button>
+                                                    <Button onClick={() => handleRemoveTag(user.id)} variant="destructive" size="sm" className="rounded-full">
+                                                        <Delete />
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -125,9 +149,16 @@ function ApprovalTagPerson({ children }: { children: ReactNode }) {
                                 </Table>
                             </div>
                         ))}
+                        <strong>Approval Remark: </strong>
+                        <div className="flex items-center gap-2">
+                            <Textarea onChange={(e) => setRemark(e.target.value)} placeholder="Remark" />
+                            <div className="flex flex-col gap-1">
+                                <Button onClick={() => handleApproveTags()} disabled={remark.length == 0} className="mt-2">Approve <Drone /></Button>
+                            </div>
+                        </div>
                     </div>
                 ) : (
-                    <p className="text-center text-gray-500">No data found.</p>
+                    <p className="text-center text-gray-500 my-10">The <span className="text-red-500">welfare officer</span> not tag any person yet!</p>
                 )}
             </DialogContent>
         </Dialog>

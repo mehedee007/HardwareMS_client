@@ -117,7 +117,7 @@ const FormCard = ({
                 Preview
               </Button>
             </Link>
-            {form.state !== 1 && <Link href={`/forms/test-responses?id=${form.id}`} className="flex-1">
+            {form.state !== 1 && <Link href={`/forms/form-respones?id=${form.id}`} className="flex-1">
               <Button
                 variant={form.totalResponse! > 0 ? "default" : "outline"}
                 size="sm"

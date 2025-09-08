@@ -10,8 +10,9 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-unsafe-call": "off",
-    " @typescript-eslint/no-unsafe-function-type": "off",
-    "@typescript-eslint/no-unsafe-function-type": "off"
+    // "@typescript-eslint/no-unsafe-function-type": "off",
+    "@typescript-eslint/no-unsafe-function-type": "off",
+    "@react-hooks/rules-of-hooks": "off"
   },
   "settings": {
     "ignoreDuringBuilds": true

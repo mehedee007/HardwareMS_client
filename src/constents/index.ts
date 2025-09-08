@@ -21,6 +21,26 @@ export function hasValidDesignation(loginUser: any) {
 --A.Adm: 1639
 --CEO  : 555
   */
-  const allowedDesignations = ["462", "508", "1639", "555"];
+  const allowedDesignations = ["462", "508", "1639", "555", "525", "1665"];
   return allowedDesignations.some((id) => loginUser?.designationID?.includes(id));
 }
+
+
+export function hasWelfairDesignation(loginUser: any){
+   const allowedDesignations = ["508"];
+  return allowedDesignations.some((id) => loginUser?.designationID?.includes(id));
+}
+
+export function hasAdminValidDesignation(loginUser: any) {
+  /*
+--Admin: 462
+--Welfa: 508
+--A.Adm: 1639
+--CEO  : 555
+  */
+  const allowedDesignations = ["462", "1639", "555"];
+  return allowedDesignations.some((id) => loginUser?.designationID?.includes(id));
+}
+
+
+
