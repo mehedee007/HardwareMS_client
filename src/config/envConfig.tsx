@@ -1,6 +1,6 @@
 const baseURL = () => {
   return (
-    process.env.NEXT_PUBLIC_API_BASE_URL || "https://localhost:44375/api"
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://localhost:7085/api"
   );
 };
 

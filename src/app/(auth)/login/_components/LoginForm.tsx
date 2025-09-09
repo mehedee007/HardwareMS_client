@@ -23,6 +23,7 @@ import { constents } from "@/constents"
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation"
 import useStore from "@/store"
+import { cwd } from "process"
 
 // Validation schema
 const loginSchema = z.object({
@@ -50,7 +51,7 @@ const LoginForm = () => {
         onSuccess: (data) => {
             if (data?.token) {
                 toast.success(`Welcome back 😊.`);
-
+                console.log(data);
                 localStorage.setItem(constents.AUTH_KEY, data.token);
                 Cookies.set(constents.AUTH_KEY, data.token, {
                     expires: 3 / 24, // 3 hours
